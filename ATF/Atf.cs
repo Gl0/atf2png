@@ -46,7 +46,8 @@ namespace Atf
                 uint length = 0;
                 if (b[3] != 0xff) {
                     _version = 0;
-                    length = (uint)b[0] << 16 + b[1] << 8 + b[2];
+                    length = ((uint)b[0] << 16) + ((uint)b[1] << 8) + b[2];
+                    reader.BaseStream.Position = reader.BaseStream.Position - 1;
                 }
                 else {
                     _version = reader.ReadByte();
@@ -60,7 +61,8 @@ namespace Atf
                 _height = 1 << reader.ReadByte();
                 _mipCount = reader.ReadByte();
                 //currently we are interested only in highest quality texture and don't bother about cubemaps, so extract only first one.
-                length = BitConverter.IsLittleEndian ? BitConverter.ToUInt32(reader.ReadBytes(4).Reverse().ToArray(), 0) : reader.ReadUInt32();
+                if (_version == 0) { b = reader.ReadBytes(3); length = ((uint)b[0] << 16) + ((uint)b[1] << 8) + b[2]; }
+                else length = BitConverter.IsLittleEndian ? BitConverter.ToUInt32(reader.ReadBytes(4).Reverse().ToArray(), 0) : reader.ReadUInt32();
                 byte[] image;
                 if (_atfFormat == ATFFormat.ATFRAWCOMPRESSED) { image = DxtUtil.DecompressDxt1(reader.ReadBytes((int) length), _width, _height); }
                 else if (_atfFormat == ATFFormat.ATFRAWCOMPRESSEDALPHA) { image = DxtUtil.DecompressDxt5(reader.ReadBytes((int)length), _width, _height); }
